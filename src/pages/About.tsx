@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-restricted-syntax
-import Navbar from '@components/Navbar';
+import Navbar from '@components/Navbar.js';
 
 const About = () => {
   return (

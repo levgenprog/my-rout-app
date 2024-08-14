@@ -1,7 +1,7 @@
 import type { PageComponent } from '@nxweb/react';
 
 // eslint-disable-next-line no-restricted-syntax
-import Navbar from '@components/Navbar';
+import Navbar from '@components/Navbar.js';
 // import { app } from '@config/app.js';
 
 const Index: PageComponent = () => {

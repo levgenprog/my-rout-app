@@ -1,42 +1,60 @@
 import fs from 'fs';
 
+import { lazy } from 'react';
 import ReactDOMServer from 'react-dom/server';
-import { StaticRouter } from 'react-router-dom/server';
 
 import express from 'express';
 
-// import { App } from '@components/app';
-import Index from '@pages/index';
+import { SSRRouter2 } from '@nxweb/react';
+
+import { App, renderAppWithEmotion } from '@components/app.js';
+import { routes } from '@config/routes.js';
 
 const app = express();
+const error = lazy(() => import('@views/NotFound.js'));
 
 app.use('/static', express.static(__dirname));
-// eslint-disable-next-line no-magic-numbers, @typescript-eslint/no-magic-numbers
+// eslint-disable-next-line @typescript-eslint/no-magic-numbers
 const PORT = process.env.PORT || 3000;
 
-/**
- * Produces the initial non-interactive HTML output of React
- * components. The hydrateRoot method is called on the client
- * to make this HTML interactive.
- * @param {string} location
- * @return {Promise<string>}
- */
 const createReactApp = async (location: string) => {
-  const reactApp = ReactDOMServer.renderToString(
-        <StaticRouter location={location}>
-            <Index />
-        </StaticRouter>
+  const reactAppString = ReactDOMServer.renderToString(
+    <SSRRouter2
+      error={error}
+      location={location}
+      root={App}
+      resolvePages={true}
+      routes={routes} />
   );
+
+  const { app: emotionApp, emotionChunks } = renderAppWithEmotion(
+    App,
+    reactAppString
+  );
+
   const html = await fs.promises.readFile(`${__dirname}/index.html`, 'utf-8');
-  const reactHtml = html.replace('<div id="root"></div>', `<div id="root">ITD${reactApp}</div>`);
+
+  const reactHtml = html
+    .replace('<div id="root"></div>', `<div id="root">${emotionApp}</div>`)
+    .replace(
+      '</head>',
+      `${emotionChunks.styles.map((style) => `<style>${style.css}</style>`).join('')}\n</head>`
+    );
 
   return reactHtml;
 };
 
-app.get('*', async (req, res) => {
-  const indexHtml = await createReactApp(req.url);
+// app.get('/favicon.ico', (req, res) => res.status(204).end());
 
-  res.status(200).send(indexHtml);
+app.get('*', async (req, res) => {
+  try {
+    const indexHtml = await createReactApp(req.url);
+
+    res.status(200).send(indexHtml);
+  } catch (error) {
+    console.error('Error rendering app:', error);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 app.listen(PORT, () => {
