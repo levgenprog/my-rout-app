@@ -1,43 +1,43 @@
-import { lazy, StrictMode } from 'react';
-// Import { createRoot } from 'react-dom/client';
-import { hydrateRoot } from 'react-dom/client';
+import { StrictMode } from 'react';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 
 import { ServiceWorker } from '@nxweb/core/web';
-import { BrowserRouter, disableReactDevTools } from '@nxweb/react';
+import { disableReactDevTools } from '@nxweb/react';
 
 import { App } from '@components/app.js';
 import { layouts } from '@config/layouts.js';
 import { routes } from '@config/routes.js';
 
+import { BrowserRouter } from '@lib/router';
+import { RouteError } from '@views/errors.js';
+
 if (process.env.NODE_ENV === 'production') {
   disableReactDevTools();
 }
 
-// Const root = createRoot(document.getElementById('root') as HTMLElement);
-const error = lazy(() => import('@views/errors.js'));
-
-/*
- * Root.render(
- * <StrictMode>
- *   <BrowserRouter
- *     defaultLayout="default"
- *     error={error}
- *     layouts={layouts}
- *     resolvePages={true}
- *     root={App}
- *     routes={routes} />
- * </StrictMode>
- * );
- */
+// const root = createRoot(document.getElementById('root') as HTMLElement);
+// root.render(
+//   <StrictMode>
+//     <BrowserRouter
+//       defaultLayout="default"
+//       error={RouteError}
+//       headManager={null}   // headManager must be null in SSR
+//       layouts={layouts}
+//       resolvePages={false} // resolvePages is NOT yet supported; need to patch the resolvePages function
+//       root={App}
+//       routes={routes} />
+//   </StrictMode>
+// );
 
 hydrateRoot(
   document.getElementById('root') as HTMLElement,
   <StrictMode>
     <BrowserRouter
       defaultLayout="default"
-      error={error}
+      error={RouteError}
+      headManager={null}    // headManager must be null in SSR
       layouts={layouts}
-      resolvePages={true}
+      resolvePages={false}  // resolvePages is NOT yet supported; need to patch the resolvePages function
       root={App}
       routes={routes} />
   </StrictMode>
