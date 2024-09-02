@@ -26,6 +26,7 @@ const App: FC<LayoutWrapperProps> = ({
         <meta content="initial-scale=1, width=device-width" name="viewport" />
       </Head>
       {children}
+      <h1>Mega</h1>
     </CacheProvider>
   );
 };

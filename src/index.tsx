@@ -1,45 +1,55 @@
-import { lazy, StrictMode } from 'react';
-// Import { createRoot } from 'react-dom/client';
+/* eslint-disable react/display-name */
+import { StrictMode } from 'react';
+// import { createRoot } from 'react-dom/client';
 import { hydrateRoot } from 'react-dom/client';
+import {BrowserRouter} from '@nxweb/react';
+// import { createBrowserRouter, RouteObject, RouterProvider } from 'react-router-dom';
 
 import { ServiceWorker } from '@nxweb/core/web';
-import { BrowserRouter, disableReactDevTools } from '@nxweb/react';
+import { disableReactDevTools } from '@nxweb/react';
 
-import { App } from '@components/app.js';
-import { layouts } from '@config/layouts.js';
+import  Main  from '@components/Main.js';
+// import { App } from '@components/app.js';
 import { routes } from '@config/routes.js';
+
+// import About from '@pages/About.js';
+
+// import Index from './pages/index.js';
 
 if (process.env.NODE_ENV === 'production') {
   disableReactDevTools();
 }
 
-// Const root = createRoot(document.getElementById('root') as HTMLElement);
-const error = lazy(() => import('@views/errors.js'));
+// const HomeComponent = () => <Index />;
+// const AboutComponent = () => <About />;
 
-/*
- * Root.render(
- * <StrictMode>
- *   <BrowserRouter
- *     defaultLayout="default"
- *     error={error}
- *     layouts={layouts}
- *     resolvePages={true}
- *     root={App}
- *     routes={routes} />
- * </StrictMode>
- * );
- */
+// const routes: RouteObject[] = [
+//   {
+//     element: <Main />,
+//     path: '/'
+//   },
+//   {
+//     element: <AboutComponent />,
+//     path: '/about'
+//   }
+// ];
+
+// const router = createBrowserRouter([
+//   {
+//     children: routes,
+//     element: <Main />,
+//     id: 'root',
+//     path: '/'
+//   }
+// ]);
 
 hydrateRoot(
   document.getElementById('root') as HTMLElement,
   <StrictMode>
-    <BrowserRouter
-      defaultLayout="default"
-      error={error}
-      layouts={layouts}
-      resolvePages={true}
-      root={App}
-      routes={routes} />
+    <BrowserRouter basePath="/" routes={routes} fallback={<div>Loading...</div>}>
+      <Main />
+    </BrowserRouter>
+    {/* <RouterProvider router={router} /> */}
   </StrictMode>
 );
 

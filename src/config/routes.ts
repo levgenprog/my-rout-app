@@ -13,11 +13,16 @@ export const routes: Route[] = [
     path: '/about',
     title: 'About'
   },
-  // {
-  //   element: lazy(() => import('@pages/index.js')),
-  //   path: '/',
-  //   title: 'index'
-  // },
+  {
+    element: lazy(() => import('@pages/index.js')),
+    path: '/',
+    title: 'index'
+  },
+  {
+    element: lazy(() => import('@components/Main.js')),
+    path: '/main',
+    title: 'main'
+  },
   {
     element: lazy(() => import('@views/NotFound.js')),
     fallback: true,
