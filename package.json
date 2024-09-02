@@ -12,8 +12,9 @@
     "lint": "nextweb lint",
     "start": "nextweb start",
     "test": "nextweb test",
-    "build:server": "webpack --config webpack.config.cjs",
-    "build:serveres": "node esbuild.config.cjs && NODE_ENV=production NX_PAGES_DIR=src/pages node dist/server.cjs"
+    "build:server": "webpack --config webpack.config.js",
+    "build:serveres": "node esbuild.config.cjs && NODE_ENV=production NX_PAGES_DIR=src/pages node dist/server.cjs",
+    "run:server": "cross-env NODE_ENV=production nextweb build && webpack --config webpack.config.js && node dist/server/index.cjs"
   },
   "dependencies": {
     "@babel/runtime": "^7.25.0",
@@ -22,7 +23,7 @@
     "@emotion/react": "^11.13.0",
     "@emotion/server": "^11.11.0",
     "@nxweb/core": "3.6.0-rc.45",
-    "@nxweb/react": "file:/media/yevgeniy/D02219E42219CFF81/Codes/NextApi/libraries/react/dist/nxweb-react-3.6.0.tgz",
+    "@nxweb/react": "3.6.0-rc.24",
     "esbuild": "^0.23.0",
     "express": "^4.19.2",
     "react": "^18.3.1",

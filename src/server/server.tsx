@@ -1,73 +1,78 @@
-import fs from 'fs';
-
-import React from 'react';
-import ReactDOMServer from 'react-dom/server';
+import fs from 'fs/promises';
+import path from 'path';
 
 import express from 'express';
 
-import { SSRRouter2 } from '@nxweb/react';
-
-import { App, renderAppWithEmotion } from '@components/app.js';
+import { App } from '@components/app.js';
+import { layouts } from '@config/layouts.js';
 import { routes } from '@config/routes.js';
-import NotFound from '@views/NotFound.js';
+import { RouteError } from '@views/errors.js';
+import { createStaticRenderer, StaticRendererOptions } from '@lib/server.js';
 
-const app = express();
+import type { Request, Response } from 'express';
 
-app.use('/static', express.static(__dirname));
-// eslint-disable-next-line @typescript-eslint/no-magic-numbers
 const PORT = process.env.PORT || 3000;
 
-// Function to create the HTML response from the React app
-const createReactApp = async (location: string) => {
-  try {
-    // Render the React app to a string
-    const reactAppString = ReactDOMServer.renderToString(
-      <SSRRouter2
-        error={NotFound}
-        location={location}
-        root={App}
-        routes={routes} />
-    );
-
-    // Extract Emotion styles and render them
-    const { emotionChunks } = renderAppWithEmotion(
-      App,
-      reactAppString
-    );
-
-    // Read the HTML template file
-    const html = await fs.promises.readFile(`${__dirname}/index.html`, 'utf-8');
-
-    // Inject the rendered app and Emotion styles into the template
-    const reactHtml = html
-      .replace('<div id="root"></div>', `<div id="root">${reactAppString}</div>`)
-      .replace(
-        '</head>',
-        `${emotionChunks.styles
-          .map((style) => `<style data-emotion-css="${style.key}">${style.css}</style>`)
-          .join('')}\n</head>`
-      );
-
-    return reactHtml;
-  } catch (err) {
-    console.error('Error during server-side rendering:', err);
-    throw err;
+const createServer = (port: string | number) => {
+  const options: StaticRendererOptions = {
+    defaultLayout: "default",
+    error: RouteError,
+    layouts,
+    resolvePages: false,
+    root: App,
+    routes
   }
-};
+  const renderer = createStaticRenderer(options);
 
-// Catch-all route to handle rendering
-app.get('*', async (req, res) => {
-  try {
-    const indexHtml = await createReactApp(req.url);
+  const app = express();
+  app.use('/img', express.static(path.resolve(__dirname, '../img'), { index: false, fallthrough: false }));
+  app.use('/js', express.static(path.resolve(__dirname, '../js'), { index: false, fallthrough: false }));
+  app.use('/views', express.static(path.resolve(__dirname, '../views'), { index: false, fallthrough: false }));
+  app.use('/workers', express.static(path.resolve(__dirname, '../workers'), { index: false, fallthrough: false }));
 
-    res.status(200).send(indexHtml);
-  } catch (error) {
-    res.status(500).send('Internal Server Error');
-    console.log(error);
-  }
-});
+  // Catch-all route to handle rendering
+  app.use('*', async (req: Request, res: Response) => {
+    const url = req.originalUrl;
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
-});
+    try {
+      const template = await fs.readFile(path.resolve(__dirname, '../index.html'), 'utf-8');
+
+      try {
+        const content = await renderer.render(req, res);
+        const html = template
+          .replace('<div id="root"></div>', `<div id="root">${content}</div>`)
+
+          // SSR proof of concept: inject meta generator tag to document HEAD
+          .replace('</head>', '  <meta name="generator" content="NextWeb 3.6.0" />\n</head>');
+
+        res.setHeader("Content-Type", "text/html");
+        res.status(200).send(html);
+      } catch (e) {
+        if (e instanceof Response && e.status >= 300 && e.status <= 399) {
+          const location = e.headers.get("Location");
+          if (location) {
+            return res.redirect(e.status, location);
+          }
+        }
+
+        throw e;
+      }
+    } catch (e) {
+      if (e instanceof Error) {
+        console.error(e.stack);
+        res.status(500).end(e.stack);
+      } else {
+        console.error(e);
+        res.status(500).end("Internal Server Error");
+      }
+    }
+  });
+
+  app.listen(port, () => {
+    console.log(`Server started on port ${PORT}`);
+  });
+
+  return app;
+}
+
+createServer(PORT);

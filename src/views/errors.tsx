@@ -31,4 +31,4 @@ const RouteError: FC<RouteProps> = () => {
 
 RouteError.displayName = 'RouteError';
 
-export default RouteError;
+export { RouteError }
